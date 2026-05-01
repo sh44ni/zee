@@ -1,0 +1,5 @@
+node_modules/
+.env
+zee.db
+zee.db-shm
+zee.db-wal

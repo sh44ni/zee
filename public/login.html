@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zee - Login</title>
+    <link rel="stylesheet" href="/fonts/fonts.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container login-container">
+        <h1 class="login-title">Zee</h1>
+        <p class="login-subtitle" id="statusText">A personal space for thought.</p>
+        
+        <form id="loginForm" class="login-form">
+            <input type="email" id="email" class="login-input" placeholder="Email address" required autofocus>
+            <button type="submit" class="btn" id="submitBtn">Request Access</button>
+        </form>
+
+        <div id="messageArea" style="display: none; margin-top: 2rem; color: var(--text-muted); font-family: var(--font-mono);">
+            <p>If that email is registered, a link has been sent.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Check your inbox.</p>
+        </div>
+    </div>
+
+    <script>
+        // Check for error in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error === 'invalid') {
+            document.getElementById('statusText').textContent = 'Invalid link.';
+            document.getElementById('statusText').style.color = '#ff6b6b';
+        } else if (error === 'expired') {
+            document.getElementById('statusText').textContent = 'Link expired. Request a new one.';
+            document.getElementById('statusText').style.color = '#ff6b6b';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const btn = document.getElementById('submitBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/auth/request-link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (res.ok) {
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('messageArea').style.display = 'block';
+                } else {
+                    throw new Error('Failed to request');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Request Access';
+                document.getElementById('statusText').textContent = 'An error occurred.';
+            }
+        });
+    </script>
+</body>
+</html>
