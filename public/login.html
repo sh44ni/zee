@@ -2,46 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zee - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#7045f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Zbeta — Sign in</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/branding/Zbetalogo_favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/branding/Zbetalogo_favicon.svg">
     <link rel="stylesheet" href="/fonts/fonts.css">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="container login-container">
-        <h1 class="login-title">Zee</h1>
-        <p class="login-subtitle" id="statusText">A personal space for thought.</p>
-        
-        <form id="loginForm" class="login-form">
-            <input type="email" id="email" class="login-input" placeholder="Email address" required autofocus>
-            <button type="submit" class="btn" id="submitBtn">Request Access</button>
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-noise"></div>
+    <div class="login-wrap container">
+        <div class="login-brand-block">
+            <img src="/branding/Zbetalogo_logo.svg" alt="Zbeta" class="login-logo">
+            <h1 class="login-title visually-hidden">Zbeta</h1>
+            <p class="login-subtitle" id="statusText">Personal AI with jokes, grit, and gradient energy.</p>
+        </div>
+
+        <form id="loginForm" class="login-form glass-panel">
+            <input type="email" id="email" class="login-input" placeholder="Your email" required autofocus>
+            <button type="submit" class="btn" id="submitBtn">Send magic link</button>
         </form>
 
-        <div id="messageArea" style="display: none; margin-top: 2rem; color: var(--text-muted); font-family: var(--font-mono);">
+        <div id="messageArea" class="login-message glass-panel" style="display: none;">
             <p>If that email is registered, a link has been sent.</p>
-            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Check your inbox.</p>
+            <p class="login-message-sub">Peek your inbox (and spam, just in case).</p>
         </div>
     </div>
 
     <script>
-        // Check for error in URL
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
+        const statusText = document.getElementById('statusText');
         if (error === 'invalid') {
-            document.getElementById('statusText').textContent = 'Invalid link.';
-            document.getElementById('statusText').style.color = '#ff6b6b';
+            statusText.textContent = 'That link looks broken.';
+            statusText.style.color = '#ff8a8a';
         } else if (error === 'expired') {
-            document.getElementById('statusText').textContent = 'Link expired. Request a new one.';
-            document.getElementById('statusText').style.color = '#ff6b6b';
+            statusText.textContent = 'Link expired — grab a fresh one below.';
+            statusText.style.color = '#ff8a8a';
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const btn = document.getElementById('submitBtn');
-            
+
             btn.disabled = true;
-            btn.textContent = 'Sending...';
+            btn.textContent = 'Sending…';
 
             try {
                 const res = await fetch('/auth/request-link', {
@@ -58,8 +68,8 @@
                 }
             } catch (err) {
                 btn.disabled = false;
-                btn.textContent = 'Request Access';
-                document.getElementById('statusText').textContent = 'An error occurred.';
+                btn.textContent = 'Send magic link';
+                statusText.textContent = 'Something glitched — try again.';
             }
         });
     </script>

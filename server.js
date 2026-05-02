@@ -64,6 +64,21 @@ app.get('/auth/me', (req, res) => {
 // --- API Routes (Protected) ---
 app.use('/api', auth.requireAuth);
 
+app.get('/api/config', (req, res) => {
+  const modelId = process.env.LLM_MODEL || '';
+  const modelDisplay =
+    process.env.LLM_MODEL_DISPLAY ||
+    modelId ||
+    'Connected model (set LLM_MODEL in .env)';
+  res.json({
+    modelId,
+    modelDisplay,
+    assistantName: process.env.ASSISTANT_NAME || 'Zbeta',
+    assistantTagline:
+      process.env.ASSISTANT_TAGLINE || 'Your playful personal co-thinker'
+  });
+});
+
 app.get('/api/conversations', (req, res) => {
   const convs = db.getConversations();
   res.json(convs);
@@ -125,7 +140,14 @@ app.post('/api/chat', async (req, res) => {
   });
 
   // 2. Build context
-  const systemPrompt = { role: 'system', content: 'You are Zee, a contemplative and insightful personal AI. Respond concisely but thoughtfully. Do not use generic assistant speak.' };
+  const assistantName = process.env.ASSISTANT_NAME || 'Zbeta';
+  const tagline =
+    process.env.ASSISTANT_TAGLINE ||
+    'a playful, clever personal AI for exactly one human.';
+  const systemPrompt = {
+    role: 'system',
+    content: `You are ${assistantName}, ${tagline} Be warm, witty, and genuinely helpful—avoid corporate assistant clichés and filler. Use short paragraphs unless the user wants depth. Emoji at most once per message when it truly fits. Occasionally delight with a clever aside; stay accurate and kind.`
+  };
   const recentMsgs = db.getRecentMessages(conversationId, 1500);
   const messages = [systemPrompt, ...recentMsgs.map(m => ({ role: m.role, content: m.content }))];
 
@@ -197,7 +219,7 @@ app.post('/api/chat', async (req, res) => {
 
       // Mood inference after every AI response
       try {
-        const moodPrompt = `Tag this exchange with one emotional tone: [contemplative, curious, playful, focused, uncertain, tired]. User: "${content}". Zee: "${fullResponse}". Reply ONLY with the single word tone.`;
+        const moodPrompt = `Tag this exchange with one emotional tone: [contemplative, curious, playful, focused, uncertain, tired]. User: "${content}". ${assistantName}: "${fullResponse}". Reply ONLY with the single word tone.`;
         let inferredMood = await llm.complete(moodPrompt, 5);
         inferredMood = inferredMood.trim().toLowerCase().replace(/[^a-z]/g, '');
         
@@ -243,5 +265,5 @@ if (!process.env.OWNER_EMAIL) {
 }
 
 app.listen(PORT, () => {
-  console.log(`Zee server running on http://localhost:${PORT}`);
+  console.log(`Zbeta assistant running on http://localhost:${PORT}`);
 });

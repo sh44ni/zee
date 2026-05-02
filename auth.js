@@ -17,10 +17,10 @@ async function sendMagicLink(email, token) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM_EMAIL || 'Zee App <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM_EMAIL || 'Zbeta <onboarding@resend.dev>',
           to: email,
-          subject: 'Zee Login Link',
-          html: `<p>Click here to log into Zee: <a href="${link}">${link}</a></p>`
+          subject: 'Zbeta — your sign-in link',
+          html: `<p>Open Zbeta: <a href="${link}">${link}</a></p>`
         })
       });
       if (!response.ok) {

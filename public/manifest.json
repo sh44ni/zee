@@ -1,0 +1,25 @@
+{
+  "name": "Zbeta — Personal AI",
+  "short_name": "Zbeta",
+  "description": "Your playful personal AI assistant — chats, threads, and ideas in one place.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#030305",
+  "theme_color": "#7045f7",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/branding/Zbetalogo_favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/branding/Zbetalogo_favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ]
+}

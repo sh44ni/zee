@@ -3,6 +3,13 @@ require('dotenv').config();
 
 const BASE_URL = process.env.LLAMA_BASE_URL || 'http://localhost:8080';
 const API_KEY = process.env.LLAMA_API_KEY || 'sk-zee-69ab26018b70d72f64cff26eec58c752be4aef6844bf7489';
+const MODEL = process.env.LLM_MODEL || '';
+
+function chatBody(extra = {}) {
+  const body = { ...extra };
+  if (MODEL) body.model = MODEL;
+  return body;
+}
 
 async function* chatStream(messages) {
   const url = `${BASE_URL}/v1/chat/completions`;
@@ -12,10 +19,12 @@ async function* chatStream(messages) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_KEY}`
     },
-    body: JSON.stringify({
-      messages,
-      stream: true
-    })
+    body: JSON.stringify(
+      chatBody({
+        messages,
+        stream: true
+      })
+    )
   });
 
   if (!response.ok) {
@@ -54,11 +63,13 @@ async function complete(prompt, maxTokens = 100) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_KEY}`
     },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: maxTokens,
-      stream: false
-    })
+    body: JSON.stringify(
+      chatBody({
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: maxTokens,
+        stream: false
+      })
+    )
   });
 
   if (!response.ok) {
