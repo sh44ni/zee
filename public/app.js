@@ -81,21 +81,59 @@ function setupInstallBanner() {
 
   const LS_DISMISS = 'zbeta-pwa-dismiss';
 
-  function hideBanner(saveDismiss) {
-    banner.hidden = true;
-    banner.setAttribute('aria-hidden', 'true');
-    if (saveDismiss) localStorage.setItem(LS_DISMISS, '1');
+  function storageDismissed() {
+    try {
+      if (localStorage.getItem(LS_DISMISS)) return true;
+    } catch (_) {
+      /* private mode */
+    }
+    try {
+      return sessionStorage.getItem(LS_DISMISS) === '1';
+    } catch (_) {
+      return false;
+    }
   }
 
-  if (localStorage.getItem(LS_DISMISS)) hideBanner(false);
+  function persistDismiss() {
+    try {
+      localStorage.setItem(LS_DISMISS, '1');
+    } catch (_) {
+      /* fallback same-tab session */
+    }
+    try {
+      sessionStorage.setItem(LS_DISMISS, '1');
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  function isStandaloneDisplay() {
+    try {
+      if (window.matchMedia('(display-mode: standalone)').matches) return true;
+      if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
+    } catch (_) {
+      /* ignore */
+    }
+    return typeof navigator !== 'undefined' && navigator.standalone === true;
+  }
+
+  function hideBanner(saveDismiss) {
+    banner.classList.remove('is-install-visible');
+    banner.setAttribute('aria-hidden', 'true');
+    if (saveDismiss) persistDismiss();
+  }
+
+  function showBanner() {
+    banner.classList.add('is-install-visible');
+    banner.setAttribute('aria-hidden', 'false');
+  }
+
+  if (storageDismissed() || isStandaloneDisplay()) hideBanner(false);
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    if (!localStorage.getItem(LS_DISMISS)) {
-      banner.hidden = false;
-      banner.setAttribute('aria-hidden', 'false');
-    }
+    if (!storageDismissed() && !isStandaloneDisplay()) showBanner();
   });
 
   window.addEventListener('appinstalled', () => {
@@ -118,11 +156,15 @@ function setupInstallBanner() {
     }
   });
 
-  dismiss.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    hideBanner(true);
-  });
+  dismiss.addEventListener(
+    'click',
+    (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      hideBanner(true);
+    },
+    true
+  );
 }
 
 async function loadConfig() {

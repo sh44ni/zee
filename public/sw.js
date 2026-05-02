@@ -1,4 +1,4 @@
-const CACHE = 'zbeta-pwa-v2';
+const CACHE = 'zbeta-pwa-v3';
 const PRECACHE = [
   '/',
   '/index.html',

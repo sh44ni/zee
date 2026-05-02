@@ -696,6 +696,7 @@ textarea::placeholder {
   box-shadow: 0 0 20px rgba(124,92,255,0.2);
 }
 
+/* Visibility toggled only via .is-install-visible — avoids broken `[hidden]` + flex cascades */
 .install-banner {
   position: fixed;
   bottom: calc(88px + env(safe-area-inset-bottom));
@@ -705,15 +706,20 @@ textarea::placeholder {
   max-width: 300px;
   z-index: 90;
   padding: 8px 10px;
-  display: flex;
   align-items: center;
   gap: 8px;
   border-radius: 14px;
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
 }
 
-/* `hidden` must win — our display:flex above breaks native hidden otherwise */
-.install-banner[hidden] {
-  display: none !important;
+.install-banner.is-install-visible {
+  display: flex !important;
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
 }
 .install-banner-icon {
   width: 28px;
@@ -737,6 +743,9 @@ textarea::placeholder {
   background: rgba(112, 69, 247, 0.32);
 }
 .install-banner-btn {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
   background: transparent;
   border: none;
   color: var(--text-muted);
