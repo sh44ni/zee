@@ -29,16 +29,6 @@ const POETRY = [
   'Small sparks start wild constellations.'
 ];
 
-const WHIMSIES = [
-  'Plot twist mode',
-  'Caffeinated logic',
-  'Soft chaos energy',
-  'Half poet, half debugger',
-  'Emoji budget: tiny',
-  'Your corner of the internet',
-  'Ideas welcome 24/7'
-];
-
 const THREAD_HINTS = [
   'Say anything odd — I’m into it.',
   'Stuck? Start messy — we’ll tidy later.',
@@ -67,7 +57,6 @@ async function init() {
   await loadConfig();
   updateHeaderTime();
   setInterval(updateHeaderTime, 60000);
-  pickWhimsy();
 
   setupEventListeners();
   await fetchConversations();
@@ -88,28 +77,51 @@ function setupInstallBanner() {
   const banner = document.getElementById('install-banner');
   const dismiss = document.getElementById('install-banner-dismiss');
   const action = document.getElementById('install-banner-action');
-  if (!banner || !action) return;
+  if (!banner || !action || !dismiss) return;
+
+  const LS_DISMISS = 'zbeta-pwa-dismiss';
+
+  function hideBanner(saveDismiss) {
+    banner.hidden = true;
+    banner.setAttribute('aria-hidden', 'true');
+    if (saveDismiss) localStorage.setItem(LS_DISMISS, '1');
+  }
+
+  if (localStorage.getItem(LS_DISMISS)) hideBanner(false);
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    if (!localStorage.getItem('zbeta-pwa-dismiss')) banner.hidden = false;
+    if (!localStorage.getItem(LS_DISMISS)) {
+      banner.hidden = false;
+      banner.setAttribute('aria-hidden', 'false');
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    hideBanner(true);
   });
 
   action.addEventListener('click', async () => {
     if (!deferredInstallPrompt) {
       showToast('Use “Add to Home Screen” from your browser menu');
+      hideBanner(true);
       return;
     }
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    banner.hidden = true;
+    try {
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+    } finally {
+      deferredInstallPrompt = null;
+      hideBanner(true);
+    }
   });
 
-  dismiss?.addEventListener('click', () => {
-    localStorage.setItem('zbeta-pwa-dismiss', '1');
-    banner.hidden = true;
+  dismiss.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    hideBanner(true);
   });
 }
 
@@ -128,9 +140,6 @@ function applyConfigToUi() {
   const cfg = state.config;
   if (!cfg) return;
 
-  const nameEl = document.getElementById('brand-name');
-  if (nameEl) nameEl.textContent = cfg.assistantName || 'Zbeta';
-
   document.title = cfg.assistantName ? `${cfg.assistantName}` : 'Zbeta';
 
   const short = cfg.modelDisplay || 'Model';
@@ -148,12 +157,6 @@ function applyConfigToUi() {
     const m = cfg.modelDisplay || 'Model';
     mobilePill.textContent = m.length > 28 ? m.slice(0, 26) + '…' : m;
   }
-}
-
-function pickWhimsy() {
-  const pill = document.getElementById('whimsy-pill');
-  if (!pill) return;
-  pill.textContent = WHIMSIES[Math.floor(Math.random() * WHIMSIES.length)];
 }
 
 function wireBrandHome() {
@@ -324,8 +327,8 @@ function updateHeaderTime() {
   else if (hour >= 21) phase = 'late night';
   else if (hour >= 0 && hour < 3) phase = 'deep night';
 
-  const phaseEl = document.getElementById('brand-phase');
-  if (phaseEl) phaseEl.textContent = `· ${phase}`;
+  const img = document.getElementById('brand-logo-img');
+  if (img) img.title = `Home · ${phase}`;
 }
 
 function getRandomPoetry() {
@@ -441,8 +444,6 @@ function appendMessage(role, content, animate = false) {
       .join('');
   }
 
-  if (role === 'user') msgDiv.classList.add('send-pop');
-
   messagesEl.appendChild(msgDiv);
   return msgDiv;
 }
@@ -537,7 +538,6 @@ async function sendMessage() {
     cursor.remove();
     state.isStreaming = false;
     fetchConversations();
-    bumpAssistantPlayful();
   } catch (err) {
     cursor.remove();
     state.isStreaming = false;
@@ -545,11 +545,6 @@ async function sendMessage() {
   }
 }
 
-function bumpAssistantPlayful() {
-  pickWhimsy();
-}
-
-// --- Stats ---
 async function renderStats() {
   try {
     const res = await fetch('/api/stats');
@@ -915,6 +910,19 @@ function setupEventListeners() {
       document.getElementById('palette-overlay').classList.remove('active');
     }
   });
+
+  let constellationResizeRaf = null;
+  window.addEventListener(
+    'resize',
+    () => {
+      if (constellationResizeRaf) cancelAnimationFrame(constellationResizeRaf);
+      constellationResizeRaf = requestAnimationFrame(() => {
+        constellationResizeRaf = null;
+        if (state.view === 'constellation') renderConstellation();
+      });
+    },
+    { passive: true }
+  );
 }
 
 function isTypingTarget(el) {
